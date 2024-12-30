@@ -3,6 +3,9 @@ from scipy.io.wavfile import write
 
 
 fs = 44100  
+silence_duration = 0.025
+final_signal = []
+
 # Base frequencies for notes 
 note_frequencies = {
     'C': 261.63, 'C#': 277.18, 'D': 293.66, 'D#': 311.13, 'E': 329.63,
@@ -40,4 +43,21 @@ for note_entry in noteHarryPotter:
     melody.append(get_frequency(note, int(octave)))
     durations.append(float(duration))
 
-print("Parsed notes and calculated frequencies DONE!.")
+
+
+for i, freq in enumerate(melody):
+    # Generate time array for the note
+    t = np.linspace(0, durations[i], int(fs * durations[i]), endpoint=False)
+    
+    # Generate sine wave for the note
+    note_signal = np.sin(2 * np.pi * freq * t)
+    
+    # Append note signal to the final signal
+    final_signal.extend(note_signal)
+    
+    # apply silence
+    silence = np.zeros(int(fs * silence_duration))
+    final_signal.extend(silence)
+
+print("Generating sine waves for notes is DONE!!")
+
