@@ -46,18 +46,19 @@ for note_entry in noteHarryPotter:
 
 
 for i, freq in enumerate(melody):
-    # Generate time array for the note
     t = np.linspace(0, durations[i], int(fs * durations[i]), endpoint=False)
-    
-    # Generate sine wave for the note
     note_signal = np.sin(2 * np.pi * freq * t)
-    
-    # Append note signal to the final signal
     final_signal.extend(note_signal)
     
     # apply silence
     silence = np.zeros(int(fs * silence_duration))
     final_signal.extend(silence)
 
-print("Generating sine waves for notes is DONE!!")
+final_signal = np.array(final_signal)
+
+# Normalize the signal to prevent clipping
+final_signal = final_signal / np.max(np.abs(final_signal))
+
+write('noteHarryPotter.wav', fs, (final_signal * 32767).astype(np.int16))
+print("Audio file saved successfully.")
 
