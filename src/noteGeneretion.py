@@ -1,34 +1,29 @@
 import numpy as np
 from scipy.io.wavfile import write
-
+import re
 
 fs = 44100  
 silence_duration = 0.025
 final_signal = []
+noteHarryPotter = []
 
-# Base frequencies for notes 
 note_frequencies = {
     'C': 261.63, 'C#': 277.18, 'D': 293.66, 'D#': 311.13, 'E': 329.63,
     'F': 349.23, 'F#': 369.99, 'G': 392.00, 'G#': 415.30, 'A': 440.00,
     'A#': 466.16, 'B': 493.88
 }
 
-# frequency for a given note and octave
 def get_frequency(note, octave):
     base_freq = note_frequencies[note]
     return base_freq * (2 ** (octave - 4))
 
 # Read notes from the "notes.m" file
-noteHarryPotter = []
-try:
-    with open("notes.m", "r") as file:
-        for line in file:
-            noteHarryPotter.append(line.strip())
-except FileNotFoundError:
-    print("The file 'notes.m' was not found in the current directory.")
-    exit()
+with open('notes.m', 'r') as file:
+    content = file.read()
+    # Extract note entries using regex
+    matches = re.findall(r"'(.*?)'", content)
+    noteHarryPotter.extend(matches)
 
-# Parse notes and calculate frequencies
 melody = []
 durations = []
 
