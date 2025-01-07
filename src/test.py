@@ -43,8 +43,8 @@ def calculate_similarity(file1_props, file2_props):
     return similarity_percentage
 
 # Get properties of the two files
-file1_props = get_wav_properties("1.wav")
-file2_props = get_wav_properties("noteHarryPotter.wav")
+file1_props = get_wav_properties("../Audio/Proof.wav")
+file2_props = get_wav_properties("../Audio/noteHarryPotter.wav")
 
 # Calculate similarity percentage
 similarity_percentage = calculate_similarity(file1_props, file2_props)

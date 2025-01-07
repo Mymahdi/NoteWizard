@@ -48,6 +48,6 @@ final_signal = np.array(final_signal)
 # Normalize the signal to prevent clipping
 final_signal = final_signal / np.max(np.abs(final_signal))
 
-write('noteHarryPotter.wav', fs, (final_signal * 32767).astype(np.int16))
+write('../Audio/noteHarryPotter.wav', fs, (final_signal * 32767).astype(np.int16))
 print("Audio file saved successfully.")
 
