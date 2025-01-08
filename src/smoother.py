@@ -33,4 +33,7 @@ for file in sorted(os.listdir(directory)):
         # plt.legend()
         # plt.show()
 
+        peaks_indices = positive_magnitude.argsort()[-7:][::-1]  # Top 7 including DC
+        peaks_indices = [idx for idx in peaks_indices if positive_freqs[idx] > 0][:6]  # Exclude DC
+
         harmonics_data[note_name] = [(positive_freqs[idx], positive_magnitude[idx]) for idx in peaks_indices]
