@@ -24,3 +24,9 @@ plt.grid()
 plt.legend()
 plt.show()
 
+num_harmonics = 6 
+peak_indices = np.argsort(positive_magnitude)[-num_harmonics:]
+dominant_frequencies = [positive_freqs[idx] for idx in peak_indices]
+dominant_frequencies.sort()
+
+print("Dominant frequencies:", dominant_frequencies)
