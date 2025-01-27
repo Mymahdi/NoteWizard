@@ -46,3 +46,8 @@ print("Dominant frequencies:", dominant_frequencies)
 identified_notes = [find_closest_note(freq) for freq in dominant_frequencies]
 print("Identified notes:", identified_notes)
 
+original_notes = [(note.split()[0], int(note.split()[1])) for note in noteHarryPotter]
+
+comparison = list(zip(original_notes, identified_notes))
+for orig, ident in comparison:
+    print(f"Original: {orig}, Identified: {ident}")
