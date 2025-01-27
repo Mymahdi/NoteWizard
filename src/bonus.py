@@ -2,6 +2,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io.wavfile import read
 
+def find_closest_note(frequency):
+    min_diff = float('inf')
+    closest_note = None
+    for note, base_freq in note_frequencies.items():
+        for octave in range(1, 9):  # Search across octaves
+            target_freq = base_freq * (2 ** (octave - 4))
+            diff = abs(target_freq - frequency)
+            if diff < min_diff:
+                min_diff = diff
+                closest_note = (note, octave)
+    return closest_note
+
 fs, generated_signal = read('../Audio/noteHarryPotter.wav')
 
 generated_signal = generated_signal / np.max(np.abs(generated_signal))
@@ -28,5 +40,9 @@ num_harmonics = 6
 peak_indices = np.argsort(positive_magnitude)[-num_harmonics:]
 dominant_frequencies = [positive_freqs[idx] for idx in peak_indices]
 dominant_frequencies.sort()
-
 print("Dominant frequencies:", dominant_frequencies)
+
+
+identified_notes = [find_closest_note(freq) for freq in dominant_frequencies]
+print("Identified notes:", identified_notes)
+
