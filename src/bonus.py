@@ -51,3 +51,18 @@ original_notes = [(note.split()[0], int(note.split()[1])) for note in noteHarryP
 comparison = list(zip(original_notes, identified_notes))
 for orig, ident in comparison:
     print(f"Original: {orig}, Identified: {ident}")
+
+# Calculate accuracy of note identification
+correct_matches = sum(1 for orig, ident in comparison if orig == ident)
+accuracy = (correct_matches / len(original_notes)) * 100
+
+print(f"Accuracy of note identification: {accuracy:.2f}%")
+
+# Save results to a file
+with open("note_identification_report.txt", "w") as report_file:
+    report_file.write("Note Identification Report\n")
+    report_file.write("=========================\n")
+    for orig, ident in comparison:
+        report_file.write(f"Original: {orig}, Identified: {ident}\n")
+    report_file.write(f"\nAccuracy: {accuracy:.2f}%\n")
+
