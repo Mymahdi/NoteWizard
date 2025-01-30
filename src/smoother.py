@@ -6,6 +6,14 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.signal import chirp
 
+def generate_piano_like_sound(samplerate, top_freqs, top_values, duration=2.0):
+    t = np.linspace(0, duration, int(samplerate * duration), endpoint=False)
+    signal = np.zeros_like(t)
+    for f, a in zip(top_freqs, top_values):
+        signal += a * np.sin(2 * np.pi * f * t)
+    damping = np.exp(-2 * t)
+    signal *= damping
+    return signal
 
 def analyze_audio(file_path):
     data, samplerate = sf.read(file_path)
