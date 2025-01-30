@@ -54,3 +54,5 @@ samplerate, top_freqs, top_values = samplerate, selected_note[1:7], selected_not
 synthesized_signal = generate_piano_like_sound(samplerate, top_freqs, top_values)
 sf.write(output_sound, synthesized_signal, samplerate)
 
+print(f"Excel file saved as {output_excel}")
+print(f"Processed sound saved as {output_sound}")
