@@ -60,7 +60,7 @@ df = pd.DataFrame(harmonic_data, columns=columns)
 df.to_excel('../Harmonics.xlsx', index=False)
 print("Harmonic coefficients saved to ../Harmonics.xlsx")
 
-input_file = '../Audio/Proof.wav'
+input_file = '../Audio/noteHarryPotter.wav'
 fs, signal = read(input_file)
 if len(signal.shape) > 1:
     signal = np.mean(signal, axis=1)
