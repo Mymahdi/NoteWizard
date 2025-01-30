@@ -1,58 +1,67 @@
 import os
 import numpy as np
-import soundfile as sf
-import scipy.fftpack as fft
-import matplotlib.pyplot as plt
 import pandas as pd
-from scipy.signal import chirp
+import matplotlib.pyplot as plt
+from scipy.io.wavfile import read
+from scipy.signal import find_peaks
 
-def generate_piano_like_sound(samplerate, top_freqs, top_values, duration=2.0):
-    t = np.linspace(0, duration, int(samplerate * duration), endpoint=False)
-    signal = np.zeros_like(t)
-    for f, a in zip(top_freqs, top_values):
-        signal += a * np.sin(2 * np.pi * f * t)
-    damping = np.exp(-2 * t)
-    signal *= damping
-    return signal
+directory = '../Audio/Octave5'
+plots_dir = '../Plots'
+os.makedirs(plots_dir, exist_ok=True)
 
-def analyze_audio(file_path):
-    data, samplerate = sf.read(file_path)
-    if len(data.shape) > 1:
-        data = np.mean(data, axis=1)
-    spectrum = np.abs(fft.fft(data))
-    freqs = fft.fftfreq(len(data), 1/samplerate)
-    pos_mask = freqs > 0
-    freqs = freqs[pos_mask]
-    spectrum = spectrum[pos_mask]
-    top_indices = np.argsort(spectrum)[-6:][::-1]
-    top_freqs = freqs[top_indices]
-    top_values = spectrum[top_indices]
-    return samplerate, top_freqs, top_values
+harmonic_data = []
 
-audio_dir = "../Audio/OOCC"
-harmonics_data = []
-for filename in sorted(os.listdir(audio_dir)):
-    if filename.endswith(".wav"):
-        file_path = os.path.join(audio_dir, filename)
-        samplerate, top_freqs, top_values = analyze_audio(file_path)
-        harmonics_data.append([filename] + list(top_freqs) + list(top_values))
-        plt.figure()
-        plt.plot(top_freqs, top_values, 'o', label=f'{filename} Harmonics')
-        plt.xlabel("Frequency (Hz)")
-        plt.ylabel("Magnitude")
-        plt.title(f"Top Harmonics of {filename}")
+for file in sorted(os.listdir(directory)):
+    if file.endswith('.wav'):
+        note_name = file.split('.')[0]
+
+        fs, signal = read(os.path.join(directory, file))
+
+        if len(signal.shape) > 1:
+            signal = np.mean(signal, axis=1)
+
+        signal = signal / np.max(np.abs(signal))
+
+        fft_spectrum = np.fft.fft(signal)
+        frequencies = np.fft.fftfreq(len(fft_spectrum), 1 / fs)
+        magnitude = np.abs(fft_spectrum)
+
+        positive_freqs = frequencies[:len(frequencies) // 2]
+        positive_magnitude = magnitude[:len(magnitude) // 2]
+
+        positive_magnitude = np.nan_to_num(positive_magnitude, nan=0.0, posinf=0.0, neginf=0.0)
+
+        peaks, _ = find_peaks(positive_magnitude, height=0.05 * np.max(positive_magnitude))
+
+        peak_frequencies = positive_freqs[peaks]
+        peak_magnitudes = positive_magnitude[peaks]
+        
+        sorted_indices = np.argsort(peak_magnitudes)[::-1]
+        top_harmonics = sorted_indices[:6]
+        
+        harmonic_info = [note_name]
+        for idx in top_harmonics:
+            harmonic_info.append(peak_frequencies[idx])
+            harmonic_info.append(peak_magnitudes[idx])
+        
+        harmonic_data.append(harmonic_info)
+        
+        plt.figure(figsize=(10, 6))
+        plt.plot(positive_freqs, positive_magnitude, label=f'{note_name} Spectrum')
+        plt.scatter(peak_frequencies[top_harmonics], peak_magnitudes[top_harmonics], color='red', marker='o', label='Harmonics')
+        plt.xlabel('Frequency (Hz)')
+        plt.ylabel('Magnitude')
+        plt.title(f'Fourier Transform of {note_name}')
+        plt.grid()
         plt.legend()
-        plt.show()
+        
+        plot_filename = os.path.join(plots_dir, f'{note_name}_spectrum.png')
+        plt.savefig(plot_filename)
+        plt.close()
+        print(f"Plot saved: {plot_filename}")
 
-output_excel = "harmonics_data.xlsx"
-df = pd.DataFrame(harmonics_data, columns=["Note"] + [f"Freq_{i+1}" for i in range(6)] + [f"Coeff_{i+1}" for i in range(6)])
-df.to_excel(output_excel, index=False)
-
-output_sound = "../Audio/noteHarryPotter.wav"
-selected_note = harmonics_data[0]
-samplerate, top_freqs, top_values = samplerate, selected_note[1:7], selected_note[7:]
-synthesized_signal = generate_piano_like_sound(samplerate, top_freqs, top_values)
-sf.write(output_sound, synthesized_signal, samplerate)
-
-print(f"Excel file saved as {output_excel}")
-print(f"Processed sound saved as {output_sound}")
+columns = ['Note'] + [f'Harmonic {i+1} Freq (Hz)' for i in range(6)] + [f'Harmonic {i+1} Mag' for i in range(6)]
+df = pd.DataFrame(harmonic_data, columns=columns)
+excel_filename = '../Harmonics.xlsx'
+df.to_excel(excel_filename, index=False)
+print(f"Harmonic coefficients saved to {excel_filename}")
