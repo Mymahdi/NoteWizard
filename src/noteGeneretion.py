@@ -17,10 +17,8 @@ def get_frequency(note, octave):
     base_freq = note_frequencies[note]
     return base_freq * (2 ** (octave - 4))
 
-# Read notes from the "notes.m" file
 with open('notes.m', 'r') as file:
     content = file.read()
-    # Extract note entries using regex
     matches = re.findall(r"'(.*?)'", content)
     noteHarryPotter.extend(matches)
 
@@ -39,13 +37,11 @@ for i, freq in enumerate(melody):
     note_signal = np.sin(2 * np.pi * freq * t)
     final_signal.extend(note_signal)
     
-    # apply silence
     silence = np.zeros(int(fs * silence_duration))
     final_signal.extend(silence)
 
 final_signal = np.array(final_signal)
 
-# Normalize the signal to prevent clipping
 final_signal = final_signal / np.max(np.abs(final_signal))
 
 write('../Audio/noteHarryPotter.wav', fs, (final_signal * 32767).astype(np.int16))
