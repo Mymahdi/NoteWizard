@@ -35,3 +35,8 @@ for filename in sorted(os.listdir(audio_dir)):
         plt.title(f"Top Harmonics of {filename}")
         plt.legend()
         plt.show()
+
+output_excel = "harmonics_data.xlsx"
+df = pd.DataFrame(harmonics_data, columns=["Note"] + [f"Freq_{i+1}" for i in range(6)] + [f"Coeff_{i+1}" for i in range(6)])
+df.to_excel(output_excel, index=False)
+
