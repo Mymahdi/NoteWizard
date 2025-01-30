@@ -248,7 +248,7 @@ Extracted harmonic data is saved in `../Harmonics.xlsx` for further analysis.
 **Relative Code:**
 
 ```python
-input_file = '../Audio/Proof.wav'
+input_file = '../Audio/noteHarryPotter.wav'
 fs, signal = read(input_file)
 if len(signal.shape) > 1:
     signal = np.mean(signal, axis=1)
@@ -376,12 +376,14 @@ else:
 - Checks if the specified audio file exists.
 - Calls `extract_initial_note()` and prints the detected frequency and closest note.
 
-## Output Example
-```
-Detected Frequency: 392.00 Hz
-Closest Note: G
-```
-This output means that the dominant frequency in the analyzed audio file is approximately 392 Hz, which corresponds to the note G.
+## Output
+
+<div style="display: flex; justify-content: center;">
+<div align="center" style= "margin: 10px;">
+    <p></p>
+    <img src="Plots/extractNote.png" alt="input" width="600">
+</div>
+</div>
 
 ## Usage
 1. Ensure the WAV file exists at the given path.
