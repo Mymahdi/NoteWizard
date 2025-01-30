@@ -48,3 +48,9 @@ output_excel = "harmonics_data.xlsx"
 df = pd.DataFrame(harmonics_data, columns=["Note"] + [f"Freq_{i+1}" for i in range(6)] + [f"Coeff_{i+1}" for i in range(6)])
 df.to_excel(output_excel, index=False)
 
+output_sound = "../Audio/noteHarryPotter.wav"
+selected_note = harmonics_data[0]
+samplerate, top_freqs, top_values = samplerate, selected_note[1:7], selected_note[7:]
+synthesized_signal = generate_piano_like_sound(samplerate, top_freqs, top_values)
+sf.write(output_sound, synthesized_signal, samplerate)
+
