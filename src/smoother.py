@@ -20,3 +20,18 @@ def analyze_audio(file_path):
     top_freqs = freqs[top_indices]
     top_values = spectrum[top_indices]
     return samplerate, top_freqs, top_values
+
+audio_dir = "../Audio/OOCC"
+harmonics_data = []
+for filename in sorted(os.listdir(audio_dir)):
+    if filename.endswith(".wav"):
+        file_path = os.path.join(audio_dir, filename)
+        samplerate, top_freqs, top_values = analyze_audio(file_path)
+        harmonics_data.append([filename] + list(top_freqs) + list(top_values))
+        plt.figure()
+        plt.plot(top_freqs, top_values, 'o', label=f'{filename} Harmonics')
+        plt.xlabel("Frequency (Hz)")
+        plt.ylabel("Magnitude")
+        plt.title(f"Top Harmonics of {filename}")
+        plt.legend()
+        plt.show()
