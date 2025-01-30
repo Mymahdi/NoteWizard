@@ -117,8 +117,8 @@ python script.py
 ```
 Ensure `notes.m` is present in the same directory and contains properly formatted note data.
 
-
-
+---
+---
 
 # 2. Harmonic Analysis and Synthesis of Audio Signals
 
@@ -288,18 +288,18 @@ Damping is applied to reduce noise and a gain factor is introduced to enhance th
 **Relative Code:**
 
 ```python
-output_file = '../Audio/noteOptimized_part2.wav'
+output_file = '../Audio/noteOptimized..wav'
 write(output_file, fs, (smoothed_signal * 32767).astype(np.int16))
 print(f"Smoothed audio saved to: {output_file}")
 ```
 
-The final synthesized audio is saved as `noteOptimized_part2.wav`.
+The final synthesized audio is saved as `noteOptimized..wav`.
 
 ## Output Files
 
 - **Excel File:** `../Harmonics.xlsx` (Harmonic coefficients of audio files)
 - **Plots:** `../Plots/{note_name}_spectrum.png`
-- **Processed Audio:** `../Audio/noteOptimized_part2.wav`
+- **Processed Audio:** `../Audio/noteOptimized..wav`
 
 ## Usage
 
@@ -314,4 +314,80 @@ Ensure the input `.wav` files exist in `../Audio/Octave5`.
 ## Conclusion
 
 This script extracts and visualizes harmonics from audio files, saves their coefficients, and reconstructs a smoothed audio version for further analysis and processing.
+
+---
+---
+
+# 3. Extracting Initial Note from an Audio File
+
+## Overview
+This script reads an audio file, performs a Fourier Transform to extract its frequency spectrum, and identifies the closest musical note to the dominant frequency.
+
+## Code Breakdown
+
+### Importing Required Libraries
+```python
+import numpy as np
+from scipy.io.wavfile import read
+import os
+```
+The script uses `numpy` for mathematical computations, `scipy.io.wavfile` to read WAV files, and `os` to check file existence.
+
+### Function to Extract the Initial Note
+```python
+def extract_initial_note(file_path):
+    fs, signal = read(file_path)
+    signal = signal / np.max(np.abs(signal))
+    fft_spectrum = np.fft.fft(signal)
+    frequencies = np.fft.fftfreq(len(fft_spectrum), 1 / fs)
+    magnitude = np.abs(fft_spectrum)
+    positive_freqs = frequencies[:len(frequencies) // 2]
+    positive_magnitude = magnitude[:len(magnitude) // 2]
+    peak_index = np.argmax(positive_magnitude)
+    detected_freq = positive_freqs[peak_index]
+```
+- Reads the WAV file and normalizes the signal.
+- Computes the FFT to transform the signal into the frequency domain.
+- Extracts only positive frequencies and finds the highest magnitude peak to determine the dominant frequency.
+
+### Mapping Frequency to the Closest Musical Note
+```python
+    note_frequencies = {
+        'C': 261.63, 'C#': 277.18, 'D': 293.66, 'D#': 311.13, 'E': 329.63,
+        'F': 349.23, 'F#': 369.99, 'G': 392.00, 'G#': 415.30, 'A': 440.00,
+        'A#': 466.16, 'B': 493.88
+    }
+    closest_note = min(note_frequencies, key=lambda note: abs(note_frequencies[note] - detected_freq))
+    return detected_freq, closest_note
+```
+- Defines standard note frequencies.
+- Finds the closest musical note by minimizing the absolute frequency difference.
+
+### Processing an Audio File
+```python
+file_path = "../Audio/noteHarryPotter.wav"
+if os.path.exists(file_path):
+    detected_freq, closest_note = extract_initial_note(file_path)
+    print(f"Detected Frequency: {detected_freq:.2f} Hz")
+    print(f"Closest Note: {closest_note}")
+else:
+    print("File not found. Please check the path.")
+```
+- Checks if the specified audio file exists.
+- Calls `extract_initial_note()` and prints the detected frequency and closest note.
+
+## Output Example
+```
+Detected Frequency: 392.00 Hz
+Closest Note: G
+```
+This output means that the dominant frequency in the analyzed audio file is approximately 392 Hz, which corresponds to the note G.
+
+## Usage
+1. Ensure the WAV file exists at the given path.
+2. Run the script to detect the fundamental frequency and closest note.
+3. Modify the `file_path` variable to analyze different audio files.
+
+## Conclusion
+This script is useful for analyzing musical recordings and determining their dominant notes, which can be beneficial in music transcription and analysis.
 
