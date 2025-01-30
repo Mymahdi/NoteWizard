@@ -117,3 +117,195 @@ python script.py
 ```
 Ensure `notes.m` is present in the same directory and contains properly formatted note data.
 
+
+
+
+# 2. Harmonic Analysis and Synthesis of Audio Signals
+
+## Introduction
+
+This script performs harmonic analysis and synthesis on `.wav` audio files using Fourier Transform. It extracts harmonic peaks from audio signals, plots their frequency spectrum, and reconstructs a smoothed version of an input signal. The results include visual plots and an Excel file with harmonic coefficients.
+
+## Dependencies
+
+Ensure you have the following Python packages installed:
+
+```bash
+pip install numpy pandas matplotlib scipy openpyxl
+```
+
+## How It Works
+
+### 1. **Harmonic Extraction from Audio Files**
+
+**Relative Code:**
+
+```python
+directory = '../Audio/Octave5'
+plots_dir = '../Plots'
+os.makedirs(plots_dir, exist_ok=True)
+
+harmonic_data = []
+for file in sorted(os.listdir(directory)):
+    if file.endswith('.wav'):
+        note_name = file.split('.')[0]
+        fs, signal = read(os.path.join(directory, file))
+        if len(signal.shape) > 1:
+            signal = np.mean(signal, axis=1)
+        signal = signal / np.max(np.abs(signal))
+        fft_spectrum = np.fft.fft(signal)
+        frequencies = np.fft.fftfreq(len(fft_spectrum), 1 / fs)
+        magnitude = np.abs(fft_spectrum)
+        positive_freqs = frequencies[:len(frequencies) // 2]
+        positive_magnitude = magnitude[:len(magnitude) // 2]
+```
+
+The script processes `.wav` files from `../Audio/Octave5`, computes their Fourier Transform, and extracts harmonic components.
+
+<div style="display: flex; justify-content: center;">
+<div align="center" style= "margin: 10px;">
+    <p></p>
+    <img src="Plots/A5_spectrum.png" alt="input" width="450">
+</div>
+</div>
+
+<div style="display: flex; justify-content: center;">
+<div align="center" style= "margin: 10px;">
+    <p></p>
+    <img src="Plots/C5_spectrum.png" alt="input" width="450">
+</div>
+</div>
+
+
+### 2. **Finding Peaks in the Frequency Spectrum**
+
+**Relative Code:**
+
+```python
+peaks, _ = find_peaks(positive_magnitude, height=0.05 * np.max(positive_magnitude))
+peak_frequencies = positive_freqs[peaks]
+peak_magnitudes = positive_magnitude[peaks]
+```
+
+This extracts frequency peaks from the Fourier Transform result, selecting the most prominent harmonics.
+
+### 3. **Plotting the Frequency Spectrum**
+
+**Relative Code:**
+
+```python
+plt.figure(figsize=(10, 6))
+plt.plot(positive_freqs, positive_magnitude, label=f'{note_name} Spectrum')
+plt.scatter(peak_frequencies[sorted_indices], peak_magnitudes[sorted_indices], color='red', marker='o', label='Harmonics')
+plt.xlabel('Frequency (Hz)')
+plt.ylabel('Magnitude')
+plt.title(f'Fourier Transform of {note_name}')
+plt.grid()
+plt.legend()
+plot_filename = os.path.join(plots_dir, f'{note_name}_spectrum.png')
+plt.savefig(plot_filename)
+plt.close()
+```
+
+This generates and saves frequency spectrum plots for each audio file in `../Plots`.
+
+
+<div style="display: flex; justify-content: center;">
+<div align="center" style= "margin: 10px;">
+    <p></p>
+    <img src="Plots/E5_spectrum.png" alt="input" width="450">
+</div>
+</div>
+
+<div style="display: flex; justify-content: center;">
+<div align="center" style= "margin: 10px;">
+    <p></p>
+    <img src="Plots/F5_spectrum.png" alt="input" width="450">
+</div>
+</div>
+
+
+### 4. **Saving Harmonic Data to Excel**
+
+**Relative Code:**
+
+```python
+columns = ['Note'] + [f'Harmonic {i+1} Freq (Hz)' for i in range(6)] + [f'Harmonic {i+1} Mag' for i in range(6)]
+df = pd.DataFrame(harmonic_data, columns=columns)
+df.to_excel('../Harmonics.xlsx', index=False)
+```
+
+Extracted harmonic data is saved in `../Harmonics.xlsx` for further analysis.
+
+### 5. **Audio Signal Smoothing and Reconstruction**
+
+**Relative Code:**
+
+```python
+input_file = '../Audio/Proof.wav'
+fs, signal = read(input_file)
+if len(signal.shape) > 1:
+    signal = np.mean(signal, axis=1)
+signal = signal / np.max(np.abs(signal))
+```
+
+Loads and normalizes an audio file before extracting harmonics.
+
+### 6. **Synthesizing a Smoothed Version of the Signal**
+
+**Relative Code:**
+
+```python
+smoothed_signal = np.zeros_like(signal, dtype=np.float64)
+for freq, mag in zip(top_harmonics['frequencies'], top_harmonics['magnitudes']):
+    smoothed_signal += mag * np.cos(2 * np.pi * freq * t)
+```
+
+This reconstructs a smoothed version of the original audio based on the detected harmonics.
+
+### 7. **Applying Damping and Gain Adjustments**
+
+**Relative Code:**
+
+```python
+damping = np.exp(-t / 5)
+smoothed_signal *= damping
+gain = 1.5
+smoothed_signal /= np.max(np.abs(smoothed_signal))
+smoothed_signal *= gain
+```
+
+Damping is applied to reduce noise and a gain factor is introduced to enhance the output signal.
+
+### 8. **Saving the Smoothed Audio**
+
+**Relative Code:**
+
+```python
+output_file = '../Audio/noteOptimized_part2.wav'
+write(output_file, fs, (smoothed_signal * 32767).astype(np.int16))
+print(f"Smoothed audio saved to: {output_file}")
+```
+
+The final synthesized audio is saved as `noteOptimized_part2.wav`.
+
+## Output Files
+
+- **Excel File:** `../Harmonics.xlsx` (Harmonic coefficients of audio files)
+- **Plots:** `../Plots/{note_name}_spectrum.png`
+- **Processed Audio:** `../Audio/noteOptimized_part2.wav`
+
+## Usage
+
+Run the script using:
+
+```bash
+python script.py
+```
+
+Ensure the input `.wav` files exist in `../Audio/Octave5`.
+
+## Conclusion
+
+This script extracts and visualizes harmonics from audio files, saves their coefficients, and reconstructs a smoothed audio version for further analysis and processing.
+
