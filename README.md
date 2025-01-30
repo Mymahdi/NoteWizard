@@ -177,6 +177,13 @@ The script processes `.wav` files from `../Audio/Octave5`, computes their Fourie
 </div>
 
 
+<div style="display: flex; justify-content: center;">
+<div align="center" style= "margin: 10px;">
+    <p></p>
+    <img src="FFT Pics/A5_spectrum.png" alt="input" width="450">
+</div>
+</div>
+
 ### 2. **Finding Peaks in the Frequency Spectrum**
 
 **Relative Code:**
@@ -208,7 +215,6 @@ plt.close()
 ```
 
 This generates and saves frequency spectrum plots for each audio file in `../Plots`.
-
 
 <div style="display: flex; justify-content: center;">
 <div align="center" style= "margin: 10px;">
