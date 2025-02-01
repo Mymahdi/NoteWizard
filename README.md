@@ -317,66 +317,150 @@ This script extracts and visualizes harmonics from audio files, saves their coef
 
 ---
 ---
+# 3. Note Detection in Audio Using Correlation Analysis
 
-# 3. Extracting Initial Note from an Audio File
+## Abstract
 
-## Overview
-This script reads an audio file, performs a Fourier Transform to extract its frequency spectrum, and identifies the closest musical note to the dominant frequency.
+This report details an implementation that extracts musical notes from an audio file (specifically, a generated "Harry Potter" theme) by correlating audio segments with synthesized sine wave templates corresponding to standard musical note frequencies. The algorithm segments the audio based on amplitude thresholding and then determines the best-matching note for each segment using the Pearson correlation coefficient.
 
-## Code Breakdown
+## Table of Contents
 
-### Importing Required Libraries
-```python
-import numpy as np
-from scipy.io.wavfile import read
-import os
-```
-The script uses `numpy` for mathematical computations, `scipy.io.wavfile` to read WAV files, and `os` to check file existence.
+1. [Introduction](#introduction)
+2. [Methodology](#methodology)
+   - [Audio Preprocessing](#audio-preprocessing)
+   - [Segmentation](#segmentation)
+   - [Correlation Analysis](#correlation-analysis)
+3. [Implementation](#implementation)
+   - [Code Walkthrough](#code-walkthrough)
+4. [Results and Discussion](#results-and-discussion)
+5. [Conclusion](#conclusion)
+6. [Appendix: Full Source Code](#appendix-full-source-code)
 
-### Function to Extract the Initial Note
-```python
-def extract_initial_note(file_path):
-    fs, signal = read(file_path)
-    signal = signal / np.max(np.abs(signal))
-    fft_spectrum = np.fft.fft(signal)
-    frequencies = np.fft.fftfreq(len(fft_spectrum), 1 / fs)
-    magnitude = np.abs(fft_spectrum)
-    positive_freqs = frequencies[:len(frequencies) // 2]
-    positive_magnitude = magnitude[:len(magnitude) // 2]
-    peak_index = np.argmax(positive_magnitude)
-    detected_freq = positive_freqs[peak_index]
-```
-- Reads the WAV file and normalizes the signal.
-- Computes the FFT to transform the signal into the frequency domain.
-- Extracts only positive frequencies and finds the highest magnitude peak to determine the dominant frequency.
+## Introduction
 
-### Mapping Frequency to the Closest Musical Note
-```python
-    note_frequencies = {
-        'C': 261.63, 'C#': 277.18, 'D': 293.66, 'D#': 311.13, 'E': 329.63,
-        'F': 349.23, 'F#': 369.99, 'G': 392.00, 'G#': 415.30, 'A': 440.00,
-        'A#': 466.16, 'B': 493.88
-    }
-    closest_note = min(note_frequencies, key=lambda note: abs(note_frequencies[note] - detected_freq))
-    return detected_freq, closest_note
-```
-- Defines standard note frequencies.
-- Finds the closest musical note by minimizing the absolute frequency difference.
+Automatic note detection from audio files is an important task in music information retrieval. In this project, the audio signal is segmented into portions that likely contain individual notes, and each segment is then analyzed to find the note that best fits by comparing it to synthetic sine wave templates. The correlation analysis leverages the Pearson correlation coefficient as a similarity measure.
 
-### Processing an Audio File
-```python
-file_path = "../Audio/noteHarryPotter.wav"
-if os.path.exists(file_path):
-    detected_freq, closest_note = extract_initial_note(file_path)
-    print(f"Detected Frequency: {detected_freq:.2f} Hz")
-    print(f"Closest Note: {closest_note}")
-else:
-    print("File not found. Please check the path.")
-```
-- Checks if the specified audio file exists.
-- Calls `extract_initial_note()` and prints the detected frequency and closest note.
+## Methodology
 
-## Output
+### Audio Preprocessing
+
+- **Reading the Audio File:**  
+  The code uses `scipy.io.wavfile.read` to load the audio file (`noteHarryPotter.wav`). If the audio is stereo, it is converted to mono by taking one channel.
+  
+- **Normalization:**  
+  The audio signal is normalized to a range of [-1, 1] to ensure consistency in amplitude, which is important for reliable threshold-based segmentation.
+
+### Segmentation
+
+- **Thresholding:**  
+  A simple amplitude threshold (set to `0.05`) is applied to the audio signal. Samples with absolute amplitude greater than this threshold are considered part of a note.
+  
+- **Grouping Consecutive Samples:**  
+  The indices of samples above the threshold are grouped into segments. A gap of more than 10 milliseconds (10 ms) between indices is considered a break between notes. Each segment is assumed to represent a single note.
+
+### Correlation Analysis
+
+- **Note Templates:**  
+  Standard musical note frequencies (e.g., C, C#, D, etc.) are defined. For each note, a sine wave template is generated that matches the length of the audio segment.
+  
+- **Pearson Correlation Coefficient:**  
+  For each segment and each note template, the Pearson correlation coefficient is computed. This coefficient measures the linear similarity between the two signals. The note corresponding to the highest correlation value is selected as the detected note for that segment.
+
+## Implementation
+
+### Code Walkthrough
+
+Below is a detailed explanation of the provided Python code:
+
+1. **Importing Libraries and Defining Note Frequencies:**
+
+   ```python
+   import numpy as np
+   from scipy.io.wavfile import read
+
+   note_frequencies = {
+       'C': 261.63, 'C#': 277.18, 'D': 293.66, 'D#': 311.13,
+       'E': 329.63, 'F': 349.23, 'F#': 369.99, 'G': 392.00,
+       'G#': 415.30, 'A': 440.00, 'A#': 466.16, 'B': 493.88
+   }
+   ```
+
+2. **Defining the Correlation Function:**
+
+   ```python
+   def correlate_segment_with_note(segment, fs, note_freq):
+       t = np.linspace(0, len(segment) / fs, len(segment), endpoint=False)
+       template = np.sin(2 * np.pi * note_freq * t)
+       
+       segment_norm = segment - np.mean(segment)
+       template_norm = template - np.mean(template)
+       
+       numerator = np.sum(segment_norm * template_norm)
+       denominator = np.sqrt(np.sum(segment_norm**2) * np.sum(template_norm**2))
+       
+       if denominator == 0:
+           return 0
+       return numerator / denominator
+   ```
+
+3. **Audio Loading and Preprocessing:**
+
+   ```python
+   fs, audio = read('../Audio/noteHarryPotter.wav')
+   
+   if audio.ndim > 1:
+       audio = audio[:, 0]
+   
+   audio = audio / np.max(np.abs(audio))
+   ```
+
+4. **Segmentation Based on Amplitude Threshold:**
+
+   ```python
+   threshold = 0.05  
+   indices = np.where(np.abs(audio) > threshold)[0]
+   
+   segments = []
+   start = indices[0]
+   prev = indices[0]
+   for idx in indices[1:]:
+       if idx - prev > int(0.01 * fs):  
+           segments.append((start, prev))
+           start = idx
+       prev = idx
+   segments.append((start, prev))
+   ```
+
+5. **Correlation Analysis and Note Extraction:**
+
+   ```python
+   extracted_notes = []
+   
+   for (start, end) in segments:
+       segment = audio[start:end]
+       best_corr = -2  
+       best_note = None
+   
+       for note, freq in note_frequencies.items():
+           corr = correlate_segment_with_note(segment, fs, freq)
+           if corr > best_corr:
+               best_corr = corr
+               best_note = note
+   
+       if best_note is not None:
+           extracted_notes.append(best_note)
+   
+   print("Extracted Notes Array (using correlation):")
+   print(extracted_notes)
+   ```
+
+## Results and Discussion
+
+- **Accuracy:**  
+  The performance of this method depends largely on the quality of the segmentation and the distinctiveness of the note templates.
+  
+- **Correlation as a Similarity Measure:**  
+  The Pearson correlation coefficient is a robust measure for comparing waveform shapes. However, it is sensitive to phase differences.
 
 <div style="display: flex; justify-content: center;">
 <div align="center" style= "margin: 10px;">
@@ -385,11 +469,7 @@ else:
 </div>
 </div>
 
-## Usage
-1. Ensure the WAV file exists at the given path.
-2. Run the script to detect the fundamental frequency and closest note.
-3. Modify the `file_path` variable to analyze different audio files.
-
 ## Conclusion
-This script is useful for analyzing musical recordings and determining their dominant notes, which can be beneficial in music transcription and analysis.
+
+This report described a straightforward method for note detection from an audio file by combining segmentation and correlation analysis. Although the implementation is simple and effective for isolated notes in a clean audio recording, further enhancements could be explored for more complex musical pieces.
 
